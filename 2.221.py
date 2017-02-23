@@ -45,7 +45,7 @@
 # Foo = type('Foo',(),{'bar':True})
 # FooChild = type('FooChild',(Foo,),{})
 #添加方法就如同添加属性一样
-# def echo_bar():
+# def echo_bar(self):
 	# print(self.bar)
 # FooChild = type('FooChild',(Foo,),{'echo_bar':echo_bar})
 # my_foo = FooChild()
@@ -101,25 +101,48 @@
 		# return type(future_class_name,future_class_parents,uppercase_attr)
 #严格意义上不是面向对象编程，我们直接调用了type函数并且我们并没有重构父类type的__new__方法
 
-class UpperAttrMetaclass(type):
-	def __new__(upperattr_metaclass,future_class_name,future_class_parents,future_class_attr):
+# class UpperAttrMetaclass(type):
+	# def __new__(upperattr_metaclass,future_class_name,future_class_parents,future_class_attr):
 	
-		uppercase_attr = {}
-		for name,val in future_class_attr.items():
-			if not name.startswith('__'):
-				uppercase_attr[name.upper()]=val
-			else:
-				uppercase_attr[name] = val
-		return type.__new__(upperattr_metaclass,future_class_name,future_class_parents,uppercase_attr)
+		# uppercase_attr = {}
+		# for name,val in future_class_attr.items(): #future_class_attr与__dict__有关，返回一个字典包含了属性和方法
+			# if not name.startswith('__'):
+				# uppercase_attr[name.upper()]=val
+			# else:
+				# uppercase_attr[name] = val
+		# return type.__new__(upperattr_metaclass,future_class_name,future_class_parents,uppercase_attr)
 		#return super(UpperAttrMetaclass,upperattr_metaclass).__new__(upperattr_metaclass,future_class_name,future_class_parents,uppercase_attr)
 #对于upperattr_metaclass，就如同定义类方法的self参数一样，是__new__方法的固定接收
-class Foo():
-	__metaclass__  = UpperAttrMetaclass
-	bar = "bip"
-print hasattr(Foo,"bar")#False
-print hasattr(Foo,"BAR")#True
+# class Foo():
+	# __metaclass__  = UpperAttrMetaclass
+	# bar = "bip"
+# print hasattr(Foo,"bar")#False
+# print hasattr(Foo,"BAR")#True
 #总结：元类，拦截类的创建；修改类；返回被修改后的类
 #__metaclass__可以接受任何可调用对象，但使用类具有更多的好处，比如OOP编程，代码直观易读
 #元类在ORM中占据了重要的角色
 #对于任何类，都是元类的实例，但type是最高的类，即所有类均衍生自type
 #对于修改类，可以使用猴子补丁以及装饰器。
+
+#demo
+class Demo(type):
+	def __new__(cls,cls_name,cls_parents,cls_attr):
+		def addWord(dict,word,attr):
+			dict.setdefault(word,attr)
+		def auto_method(self):
+			print "this is a auto_method"
+		new_attr={}
+		for name,val in cls_attr.items():
+				new_attr[name] = val
+		addWord(new_attr,"auto_method",auto_method)
+		addWord(new_attr,"attr",True)
+		return type.__new__(cls,cls_name,cls_parents,new_attr)
+
+class demo(object):
+	__metaclass__ = Demo
+	bar = "bip"
+
+print hasattr(demo,"bar") # True
+print hasattr(demo,"attr")# True
+print demo.attr # True
+demo().auto_method() # "thisi is a auto_method"
