@@ -18,7 +18,7 @@ itr = Itr()
 i1 = iter(itr,'c')#itr可调用，返回一个可调用iterator，即每次调用__call__函数；;迭代出c立马停止
 print "i1=%s" %i1
 
-i2 = iter(itr)#itr可迭代，__iter__函数返回一个iteration,即调用了定义的__iter__函数，返回一个listiterator
+i2 = iter(itr)#itr可迭代，__iter__函数返回一个iteration,即调用了定义的__iter__函数，（返回了一个listiterator）
 print "i2=%s" %i2#即当使用iter函数时，会查找参数对象是否包含__iter__方法并能返回一个iterator！
 
 for i in i1:
