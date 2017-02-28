@@ -66,8 +66,7 @@
 #注意！！！在定义中寻找__metaclass__属性时，若没有找到，Python会在模块中寻找该属性
 #即若在一个模块中定义了__metaclass__，则所有定义的类都会按照__metaclass__来创建
 
-#若仍没有找到__metaclass__属性，则会使用（第一）父类的元类（通常为type()）来创建该类
-#__metaclass__属性不会继承，但是父类中使用的元类（parent.__class__）会继承。
+
 
 #定制metaclasses
 # def upper_attr(future_class_name,future_class_parents,future_class_attrs):
@@ -146,3 +145,58 @@ print hasattr(demo,"bar") # True
 print hasattr(demo,"attr")# True
 print demo.attr # True
 demo().auto_method() # "thisi is a auto_method"
+
+#利用元类编写ORM
+
+class Field(object):
+	def __init__(self,name,column_type):
+		self.name = name
+		self.column_type = column_type
+	def __str__(self):
+		return '<%s:%s>' % (self.__class__.__name__,self.name)
+
+class StringField(Field):
+	def __init__(self,name):
+		super(StringField,self).__init__(name,'varchar(100)')
+
+class IntegerField(Field):
+	def __init__(self,name):
+		super(IntegerField,self).__init__(name,'bigint')
+
+class ModelMetaclass(type):
+	def __new__(cls,name,bases,attrs):
+		if name =="Model":
+			return type.__new__(cls,name,bases,attrs)
+		print 'Found model:%s' % name
+		mappings = dict()
+		for k,v in attrs.items():
+			if isinstance(v,Field):
+				print 'Found mapping:%s==> %s' %(k,v)
+				mappings[k]=v
+		for k in mappings.keys():
+			sttrs.pop(k)
+		attrs['__mappings__'] = mappings
+		attrs['__table__'] = name
+		return type.__new__(cls,name,bases,attrs)
+
+class Model(dict,metaclass=ModelMetaclass):
+	def __init__(self,**kwargs):
+		super(Model,self).__init__(**kwargs)
+	def __getattr__(self,key):
+		try:
+			return self[key]
+		except KeyError:
+			raise AttributeError
+	def __setattr__(self,key,value):
+		self[key] = value
+	def save(self):
+		fields = []
+		params = []
+		args = []
+		for k,v in self.__mapping__.items():
+			fields.append(v.name)
+			params.append('?')
+			args.append(getattr(self,k,None))
+		sql = 'insert into %s (%s) values (%s)' % (self.__table__, ','.join(fields), ','.join(params))
+		print 'SQL: %s' % sql
+		print 'ARGS: %s' % str(args)
