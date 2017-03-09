@@ -13,7 +13,7 @@ f = open('dumps.txt','w')
 json.dump(d,f)
 f.close()
 #JSON反序列化为Python对象：loads()方法，将JSON对象转换为Python对象；load()方法将JSON数据从file-like 
-#object 文件中读出并转换为json对象
+#object 文件中读出并转换为python对象
 json_str = json.dumps(d)
 json.loads(json_str)
 with open('dumps.txt','r') as f:
